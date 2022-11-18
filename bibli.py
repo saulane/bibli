@@ -11,6 +11,7 @@ import configparser
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 
+import xml.etree.ElementTree as ET
 
 
 config = configparser.RawConfigParser().read("bibli.conf")
@@ -28,11 +29,12 @@ class Bibliotheque():
         self.rapport_saved = self._open_bibli()
         self.path = path
         self.livres = self._extraire_livres_depuis_fichier(self.path)
-        self.generer_toc()
         
 
         if self.rapport_saved == None:
-            self.enregistrer_rapport(self._get_dict_livres_par_auteur(self.livres))
+            self.enregistrer_rapport_auteur( self._get_dict_livres_par_auteur(self.livres) )
+            self.enregistrer_rapport_livres( self.livres )
+            self.generer_toc()
         else:
             ajoute,retire = self._verif_changement(self.rapport_saved, self.livres)
 
@@ -41,17 +43,18 @@ class Bibliotheque():
                 print("Livres retirés", retire)
 
                 for l in retire:
-                    l._del_toc()
+                    print(l)
+                    l.del_toc()
 
                 for l in ajoute:
-                    l._save_toc()
+                    l.save_toc()
 
-                self.enregistrer_rapport(self._get_dict_livres_par_auteur(self.livres))
-
+                self.enregistrer_rapport_auteur( self._get_dict_livres_par_auteur(self.livres) )
+                self.enregistrer_rapport_livres( self.livres )
 
     def _open_bibli(self):
-        if os.path.exists("rapport.json"):
-            with open("rapport.json", "r") as file:
+        if os.path.exists("rapport_auteurs.json"):
+            with open("rapport_auteurs.json", "r") as file:
                 livres_par_auteur = json.load(file)
                 livres = []
                 for auteur in livres_par_auteur:
@@ -80,13 +83,19 @@ class Bibliotheque():
         auteurs = self._get_auteurs_set(livres)
         return {auteur: [livre.titre for livre in livres if livre.auteur == auteur] for auteur in auteurs}
 
-    def enregistrer_rapport(self, livres_par_auteur):
-        with open("rapport.json", "w") as file:
+    def enregistrer_rapport_auteur(self, livres_par_auteur):
+        with open("rapport_auteurs.json", "w") as file:
             file.write( json.dumps(livres_par_auteur, indent=4) )
+
+    def enregistrer_rapport_livres(self, livres):
+        dict_livres = {l.titre: {"auteur": l.auteur, "fichier": str(l.path)} for l in livres }
+        print(dict_livres)
+        with open("rapport_livres.json", "w") as file:
+            file.write( json.dumps(dict_livres, indent=4) )
 
     def generer_toc(self):
         for l in self.livres:
-            l._save_toc()
+            l.save_toc()
 
     def _verif_changement(self, old, new):
         livres_ajoutes = new.difference(old)
@@ -111,8 +120,6 @@ class Livre():
 
             if self.titre == None:
                 self.titre = self.file_name
-
-
         else:
             self.auteur = auteur
             self.titre = titre
@@ -136,7 +143,7 @@ class Livre():
             parser = PDFParser(f)
             document = PDFDocument(parser)
 
-            # Get the outlines of the document.
+            # Recupère la TOC du document
             try:
                 outlines = document.get_outlines()
 
@@ -157,17 +164,21 @@ class Livre():
             self.titre = titre
 
         b = ebl.read_epub(self.path)
-        self.toc = b.get_item_with_href("toc.ncx").get_content()
+        toc_xml = b.get_item_with_href("toc.ncx").get_content()
+        self.toc = toc_xml
 
-    def _save_toc(self):
+        tree = ET.fromstring(toc_xml).findall("ncx/navMap/navPoint/navLabel/")
+        print(tree)
+        # print(tree.tag)
+
+    def save_toc(self):
         if self.toc != None:
             with open(f"tocs/{self.titre}_toc.txt", "wb") as f:
                 f.write(self.toc)
 
-    def _del_toc(self):
-        if self.toc != None:
-            Path(f"tocs/{self.titre}_toc.txt").unlink()
-            del self
+    def del_toc(self):
+        Path(f"tocs/{self.titre}_toc.txt").unlink()
+        del self
 
     def force_del(self):
         self.path.unlink()
