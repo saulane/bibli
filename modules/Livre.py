@@ -1,30 +1,29 @@
-from .utils import combiner_paths, text_to_pdf
-
+from .utils import text_to_pdf
 
 import os
-import sys
 from PyPDF2 import PdfFileReader
 import epub
 from pathlib import Path
 import ebooklib.epub as ebl
 import json
-import configparser
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfdocument import PDFDocument
 from ebooklib.utils import debug
+import ebooklib
 
 from bs4 import BeautifulSoup as bs
 
-import aspose.words as aw
 import pypandoc
-
 import logging
-logging.basicConfig(filename='log.log', encoding='utf-8', level=logging.DEBUG)
-logging.basicConfig(format='%(asctime)s %(message)s')
 
+
+logger = logging.getLogger()
 
 class Livre():
     def __init__(self, auteur=None, titre=None, path=None, lang="fr", open=True) -> None:
+        """
+            Crée un lire à partir d'un fichier
+        """
         self.toc = None
         if path != None:
             self.path = path
@@ -36,14 +35,9 @@ class Livre():
             self.titre = titre
             self.lang = lang
 
-            if open==True:
-                if path.suffix == ".pdf":
-                    self._open_pdf()
-                elif path.suffix == ".epub":
-                    self._open_epub()
+            if open:
+                self.recuperer_info_fichier()
 
-            if self.titre == None:
-                self.titre = self.file_name
         else:
             self.auteur = auteur
             self.titre = titre
@@ -51,8 +45,14 @@ class Livre():
         if self.auteur == None:
             self.auteur = "Sans Auteur"
 
-        if self.titre == None:
-            raise ValueError(f"Impossible de récupérer le titre du livre, {titre}")
+        # if self.titre == None:
+        #     raise ValueError(f"Impossible de récupérer le titre du livre, {titre}")
+
+    def recuperer_info_fichier(self):
+        if self.path.suffix == ".pdf":
+            self._open_pdf()
+        elif self.path.suffix == ".epub":
+            self._open_epub()
 
     def __repr__(self) -> str:
         return f"{self.titre} par {self.auteur}"
@@ -74,10 +74,9 @@ class Livre():
                 for (level,title,dest,a,se) in outlines:
                     content.append(f"{title}")
                 self.toc = bytes("\n".join(content), encoding='utf-8')
-            except Exception as e:
-                # logging.warning("Pas de table des matières pour", self.titre)
+            except :
+                logger.debug(f"Pas de table des matières pour {self.titre}")
                 self.toc = None
-                pass
                 
 
     def _open_epub(self):
@@ -99,26 +98,28 @@ class Livre():
         toc_pretty = bytes("\n".join(toc_parsed), "utf-8")
         self.toc = toc_pretty
 
-    def save_toc(self):
+    def save_toc(self, path):
         if self.toc != None:
-            with open(f"tocs/{self.titre}_toc.txt", "wb") as f:
+            with open(f"{path}/{self.titre}_toc.txt", "wb") as f:
                 f.write(self.toc)
             
             
-            text_to_pdf(self.toc.decode("utf-8"), f"tocs/{self.titre}_toc.pdf")
-
-            # pypandoc.convert_text(self.toc.decode("utf-8"), format="md", to="epub", outputfile=f"tocs/{self.titre}_toc.epub")
+            text_to_pdf(self.toc.decode("utf-8"), f"{path}/{self.titre}_toc.pdf")
 
 
-            # doc = aw.Document()
-            # builder = aw.DocumentBuilder(doc)
-            # builder.writeln(self.toc.decode("utf-8"))
+            md = self.toc.decode("utf-8").replace("\n", "<br />").replace("À propos de cette édition électronique", "")
 
-            # doc.save(f"C:\\Users\\raves\\Documents\\Dev\\bibli\\tocs\\{self.titre}_toc.pdf")
+            pypandoc.convert_text(md, format="md", to="epub",extra_args=[f"--metadata=title:{self.titre}",f"--metadata=author:{self.auteur}",f"--metadata=language:{self.lang}"] ,outputfile=f"{path}/{self.titre}_toc.epub")
 
     def del_toc(self):
         if os.path.isfile(f"tocs/{self.titre}_toc.txt"):
             Path(f"tocs/{self.titre}_toc.txt").unlink()
+
+        if os.path.isfile(f"tocs/{self.titre}_toc.epub"):
+            Path(f"tocs/{self.titre}_toc.epub").unlink()
+
+        if os.path.isfile(f"tocs/{self.titre}_toc.pdf"):
+            Path(f"tocs/{self.titre}_toc.pdf").unlink()
         del self
 
     def force_del(self):

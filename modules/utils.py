@@ -21,8 +21,6 @@ def text_to_pdf(text, filename):
     character_width_mm = 7 * pt_to_mm
     width_text = a4_width_mm / character_width_mm
 
-
-
     pdf = FPDF(orientation='P', unit='mm', format='A4')
 
     pdf.add_font('DejaVu', '', 'fonts/DejaVuSansCondensed.ttf', uni=True)

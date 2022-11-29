@@ -2,3 +2,9 @@
 /rapport.json
 /test.html
 /tocs
+/rapports
+
+__pycache__
+
+*.backup
+*.txt
