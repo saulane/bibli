@@ -22,7 +22,12 @@ logger = logging.getLogger()
 class Livre():
     def __init__(self, auteur=None, titre=None, path=None, lang="fr", open=True) -> None:
         """
-            Crée un lire à partir d'un fichier
+            Crée un livre à partir d'un fichier
+            :auteur est l'auteur du livre
+            :titre est le titre du livre
+            :path est le chemin du fichier du livre
+            :lang est la langue du livre
+            :open True pour récupérer directement les infos depuis le fichier spécifié en :path, False sinon
         """
         self.toc = None
         if path != None:
@@ -54,6 +59,9 @@ class Livre():
         #     raise ValueError(f"Impossible de récupérer le titre du livre, {titre}")
 
     def recuperer_info_fichier(self):
+        """
+            Choisit la bonne fonction de récupération des données en fonction du type de fichier
+        """
         if self.path.suffix == ".pdf":
             self._open_pdf()
         elif self.path.suffix == ".epub":
@@ -63,6 +71,9 @@ class Livre():
         return f"{self.titre} par {self.auteur}"
 
     def _open_pdf(self):
+        """
+            Ouvre un fichier pdf et extrait le titre, l'auteur, la langue et la table des matières si elle existe
+        """
         with self.path.open(mode='rb') as f:
             pdf = PdfFileReader(f, strict=False)
             information = pdf.metadata
@@ -85,6 +96,9 @@ class Livre():
                 
 
     def _open_epub(self):
+        """
+            Ouvre un fichier epub et extrait le titre, l'auteur, la langue et la table des matières
+        """
         with epub.open_epub(f'{self.path}') as book:
             metadata = book.opf.metadata
             auteur = metadata.creators[0][0]
@@ -104,19 +118,22 @@ class Livre():
         self.toc = toc_pretty
 
     def save_toc(self, path):
+        """
+            Enregistre la table des matières en epub,txt et pdf dans le dossier spécifier en :path
+        """
         if self.toc != None:
             with open(f"{path}/{self.titre}_toc.txt", "wb") as f:
                 f.write(self.toc)
             
-            
             text_to_pdf(self.toc.decode("utf-8"), f"{path}/{self.titre}_toc.pdf")
 
-
             md = self.toc.decode("utf-8").replace("\n", "<br />").replace("À propos de cette édition électronique", "")
-
             pypandoc.convert_text(md, format="md", to="epub",extra_args=[f"--metadata=title:{self.titre}",f"--metadata=author:{self.auteur}",f"--metadata=language:{self.lang}"] ,outputfile=f"{path}/{self.titre}_toc.epub")
 
     def del_toc(self, dossier_rapports):
+        """
+            Supprime les tables des matières et l'objet
+        """
         if os.path.isfile(f"{dossier_rapports}/{self.titre}_toc.txt"):
             Path(f"{dossier_rapports}/{self.titre}_toc.txt").unlink()
 
@@ -128,6 +145,9 @@ class Livre():
         del self
 
     def force_del(self):
+        """
+            Supprime le fichier originel du livre
+        """
         self.path.unlink()
         del self
 
