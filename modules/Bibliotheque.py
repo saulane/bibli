@@ -62,7 +62,8 @@ class Bibliotheque():
                 livres = set( livres )
                 return livres
         else:
-            return None
+            logging.error(f"Le chemin d'accès n'existe pas, veuillez vérifier que le fichier: {self.dossier_rapports}/rapport_livres.txt, existe bien")
+            raise Exception("Bibliotèque introuvable, vérifier le chemin d'accès aux rapports")
 
     def _extraire_livres_depuis_fichier(self, path):
         paths = combiner_paths(path, ("*.pdf", "*.epub"))
