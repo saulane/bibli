@@ -1,3 +1,6 @@
+#!/usr/bin/python
+
+
 from .utils import text_to_pdf
 
 import os

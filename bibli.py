@@ -1,9 +1,9 @@
+#!/usr/bin/python
 from modules.Bibliotheque import Bibliotheque
 import sys
 import os
 import configparser
 import logging
-
 
 
 config = configparser.ConfigParser()

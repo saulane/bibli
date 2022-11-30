@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from .Livre import Livre
 from .utils import combiner_paths
 
