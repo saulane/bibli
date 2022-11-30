@@ -1,7 +1,5 @@
 ﻿# Table des matières
 
-* [bibli](#bibli)
-* [modules](#modules)
 * [modules.Bibliotheque](#modules.Bibliotheque)
   * [Bibliotheque](#modules.Bibliotheque.Bibliotheque)
     * [\_\_init\_\_](#modules.Bibliotheque.Bibliotheque.__init__)
