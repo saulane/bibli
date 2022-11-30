@@ -26,7 +26,12 @@ class Livre():
         """
         self.toc = None
         if path != None:
-            self.path = path
+            if isinstance(path, Path):
+                self.path = path
+            else:
+                self.path = Path(path)
+
+            
             if isinstance(path, Path):
                 self.file_name = path.name
             else:
@@ -111,15 +116,15 @@ class Livre():
 
             pypandoc.convert_text(md, format="md", to="epub",extra_args=[f"--metadata=title:{self.titre}",f"--metadata=author:{self.auteur}",f"--metadata=language:{self.lang}"] ,outputfile=f"{path}/{self.titre}_toc.epub")
 
-    def del_toc(self):
-        if os.path.isfile(f"tocs/{self.titre}_toc.txt"):
-            Path(f"tocs/{self.titre}_toc.txt").unlink()
+    def del_toc(self, dossier_rapports):
+        if os.path.isfile(f"{dossier_rapports}/{self.titre}_toc.txt"):
+            Path(f"{dossier_rapports}/{self.titre}_toc.txt").unlink()
 
-        if os.path.isfile(f"tocs/{self.titre}_toc.epub"):
-            Path(f"tocs/{self.titre}_toc.epub").unlink()
+        if os.path.isfile(f"{dossier_rapports}/{self.titre}_toc.epub"):
+            Path(f"{dossier_rapports}/{self.titre}_toc.epub").unlink()
 
-        if os.path.isfile(f"tocs/{self.titre}_toc.pdf"):
-            Path(f"tocs/{self.titre}_toc.pdf").unlink()
+        if os.path.isfile(f"{dossier_rapports}/{self.titre}_toc.pdf"):
+            Path(f"{dossier_rapports}/{self.titre}_toc.pdf").unlink()
         del self
 
     def force_del(self):

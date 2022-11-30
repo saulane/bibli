@@ -26,7 +26,6 @@ class Bibliotheque():
     def update(self):
         logging.debug("Mise à jour des livres")
         self.rapport_saved = self._open_bibli()
-        print()
         if self.rapport_saved != None:
             ajoute,retire = self._verif_changement(self.rapport_saved, self.livres)
             if len(ajoute) > 0 or len(retire) > 0:
@@ -35,7 +34,7 @@ class Bibliotheque():
 
                 for l in retire:
                     logging.debug(f"{l} retiré")
-                    l.del_toc()
+                    l.del_toc(self.dossier_rapports)
 
                 for l in ajoute:
                     logging.debug(f"{l} ajouté")
@@ -55,9 +54,8 @@ class Bibliotheque():
                 livres = []
                 for titre in livres_json:
                     try:
-                        livre = Livre(auteur=livres_json[titre]["auteur"], titre=titre, path=livres_json[titre]["fichier"], lang=livres_json[titre]["langue"])
-                        livre.recuperer_info_fichier()
-                        livres.append()
+                        livre = Livre(auteur=livres_json[titre]["auteur"], titre=titre, path=livres_json[titre]["fichier"], lang=livres_json[titre]["langue"], open=False)
+                        livres.append(livre)
                     except ValueError as e:
                         print(e)
                         continue           
@@ -104,7 +102,5 @@ class Bibliotheque():
     def _verif_changement(self, old, new):
         livres_ajoutes = new.difference(old)
         livres_enleves = old.difference(new)
-
-        print(old, new)
 
         return livres_ajoutes, livres_enleves

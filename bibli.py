@@ -16,7 +16,7 @@ if __name__ == "__main__":
     config_file_path =""
     
     log_file = "log.log"
-
+    dossier_livre = "livres/"
     
 
     if len(args) == 1:
@@ -29,15 +29,17 @@ if __name__ == "__main__":
             try:
                 with open(args[pos+1], "r") as config_file:
                     config.read_file(config_file)
-                    log_file = config["DEFAULT"]["fichier_log"]
+                    log_file = config["CONFIG"]["fichier_log"]
+                    dossier_livre = config["CONFIG"]["dossier_livres"]
+
             except:
                 raise Exception("Impossible d'ouvrir le fichier de configuration, le fichier existe t'il bien ?")
         logging.basicConfig(filename=log_file, format='%(asctime)s %(message)s',encoding='utf-8', level=logging.DEBUG)
 
         if args[-1] == "init":
             print("Initialisation de la bibliothèque")
-            bibli = Bibliotheque("./livres/", config["DEFAULT"]["dossier_rapports"])
+            bibli = Bibliotheque(dossier_livre, config["CONFIG"]["dossier_rapports"])
             bibli.initialise()
         elif args[-1] == "update":
-            bibli = Bibliotheque("./livres/", config["DEFAULT"]["dossier_rapports"])
+            bibli = Bibliotheque(dossier_livre, config["CONFIG"]["dossier_rapports"])
             bibli.update()
